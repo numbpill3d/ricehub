@@ -8,11 +8,12 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "deploy": "npm run build && firebase deploy"
   },
   "dependencies": {
     "@vitejs/plugin-legacy": "latest",
+    "firebase": "^10.12.0",
     "vite": "latest"
-  },
-  "devDependencies": {}
+  }
 }

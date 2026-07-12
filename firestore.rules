@@ -1,0 +1,110 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper: user owns this document
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Helper: user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Posts collection - the core content
+    match /posts/{postId} {
+      // Public read - anyone can view posts
+      allow read: if true;
+      
+      // Create - authenticated user can create, must be owner
+      allow create: if isAuth() &&
+        request.resource.data.keys().hasAll(['title', 'component', 'author', 'handle', 'summary', 'createdAt']) &&
+        request.resource.data.handle == request.auth.token.name || request.resource.data.handle == request.auth.uid &&
+        request.resource.data.createdAt == request.time;
+      
+      // Update - only author can update their post
+      allow update: if isAuth() &&
+        resource.data.handle == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title', 'summary', 'tags', 'links', 'distro', 'wm', 'license', 'updatedAt'
+        ]);
+      
+      // Delete - only author can delete
+      allow delete: if isAuth() && resource.data.handle == request.auth.uid;
+    }
+
+    // Post likes - per user per post
+    match /post_likes/{likeId} {
+      allow read: if true;
+      allow create: if isAuth() &&
+        request.resource.data.keys().hasAll(['postId', 'handle']) &&
+        request.resource.data.handle == request.auth.uid;
+      allow delete: if isAuth() && resource.data.handle == request.auth.uid;
+    }
+
+    // Post saves - per user per post
+    match /post_saves/{saveId} {
+      allow read: if isAuth() && resource.data.handle == request.auth.uid;
+      allow create: if isAuth() &&
+        request.resource.data.keys().hasAll(['postId', 'handle']) &&
+        request.resource.data.handle == request.auth.uid;
+      allow delete: if isAuth() && resource.data.handle == request.auth.uid;
+    }
+
+    // Comments on posts
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isAuth() &&
+        request.resource.data.keys().hasAll(['postId', 'handle', 'text', 'createdAt']) &&
+        request.resource.data.handle == request.auth.uid &&
+        request.resource.data.createdAt == request.time;
+      allow update: if isAuth() && resource.data.handle == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'updatedAt']);
+      allow delete: if isAuth() && resource.data.handle == request.auth.uid;
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isAuth() &&
+        request.auth.uid == userId &&
+        request.resource.data.keys().hasAll(['handle', 'createdAt']) &&
+        request.resource.data.handle.size() >= 2 &&
+        request.resource.data.handle.size() <= 32 &&
+        request.resource.data.createdAt == request.time;
+      allow update: if isAuth() &&
+        request.auth.uid == userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'handle', 'bio', 'avatarUrl', 'links', 'updatedAt'
+        ]);
+    }
+
+    // User settings (private)
+    match /user_settings/{userId} {
+      allow read, write: if isAuth() && request.auth.uid == userId;
+    }
+
+    // Follows
+    match /follows/{followId} {
+      allow read: if true;
+      allow create: if isAuth() &&
+        request.resource.data.keys().hasAll(['follower', 'following', 'createdAt']) &&
+        request.resource.data.follower == request.auth.uid &&
+        request.resource.data.follower != request.resource.data.following &&
+        request.resource.data.createdAt == request.time;
+      allow delete: if isAuth() && resource.data.follower == request.auth.uid;
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuth() && resource.data.recipient == request.auth.uid;
+      allow create: if isAuth() &&
+        request.resource.data.keys().hasAll(['recipient', 'type', 'createdAt']) &&
+        request.resource.data.recipient != request.auth.uid;
+      allow update: if isAuth() && resource.data.recipient == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isAuth() && resource.data.recipient == request.auth.uid;
+    }
+  }
+}

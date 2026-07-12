@@ -1,7 +1,28 @@
 import './styles.css';
-
-const DB_KEY = 'ricehub.db.v1';
-const USER_KEY = 'ricehub.handle.v1';
+import {
+  initFirebaseService,
+  onAuthStateChanged,
+  getCurrentUser,
+  getUserHandle,
+  createPost,
+  getPost,
+  updatePost,
+  deletePost,
+  subscribeToPosts,
+  toggleLike,
+  isPostLiked,
+  toggleSave,
+  isPostSaved,
+  addComment,
+  deleteComment,
+  subscribeToComments,
+  uploadAttachment,
+  deleteAttachment,
+  createUserProfile,
+  getUserProfile,
+  updateUserProfile,
+  uploadAvatar
+} from './firebase-service.js';
 
 const COMPONENTS = [
   'sddm', 'plasma', 'aurorae', 'kvantum', 'gtk', 'icons', 'cursors',
@@ -13,8 +34,9 @@ const FILE_LIMIT = 950_000;
 
 const seedPosts = [
   {
-    id: crypto.randomUUID(),
+    id: 'seed-1',
     author: 'voidmaintainer',
+    handle: 'voidmaintainer',
     title: 'black terminal rice index skeleton',
     component: 'full-rice',
     distro: 'arch',
@@ -25,44 +47,116 @@ const seedPosts = [
     links: ['https://store.kde.org/', 'https://www.gnome-look.org/'],
     attachments: [],
     createdAt: Date.now() - 86400000,
-    likes: ['system'],
-    saves: [],
+    updatedAt: Date.now() - 86400000,
+    likesCount: 1,
+    savesCount: 0,
+    commentsCount: 1,
     comments: [
       { id: crypto.randomUUID(), author: 'indexbot', text: 'seed post. local-only. delete when real submissions exist.', createdAt: Date.now() - 86000000 }
     ]
   }
 ];
 
-let db = loadDb();
 let state = {
   query: '',
   component: 'all',
   sort: 'hot',
-  handle: localStorage.getItem(USER_KEY) || 'anonymous-rice-ghoul',
+  handle: 'anonymous-rice-ghoul',
   composerOpen: false,
-  drafts: { attachments: [] }
+  drafts: { attachments: [] },
+  posts: [],
+  userLikes: new Set(),
+  userSaves: new Set(),
+  firebaseReady: false,
+  firebaseUser: null
 };
 
-function loadDb() {
-  const raw = localStorage.getItem(DB_KEY);
-  if (!raw) return { posts: seedPosts, createdAt: Date.now() };
+async function init() {
+  const { isFirebaseConfigured } = await import('./firebase-init.js');
+  
+  if (isFirebaseConfigured()) {
+    try {
+      await initFirebaseService(false);
+      onAuthStateChanged(handleAuthChange);
+      state.firebaseReady = true;
+    } catch (e) {
+      console.warn('[ricehub] Firebase init failed, falling back to localStorage:', e);
+      state.firebaseReady = false;
+      loadLocalDb();
+    }
+  } else {
+    console.log('[ricehub] Running in localStorage mode (no Firebase config)');
+    state.firebaseReady = false;
+    loadLocalDb();
+  }
+  
+  render();
+  bindEvents();
+}
+
+function handleAuthChange(user) {
+  state.firebaseUser = user;
+  if (user) {
+    state.handle = user.displayName || user.uid;
+    loadUserProfile();
+  } else {
+    state.handle = localStorage.getItem('ricehub.handle.v1') || 'anonymous-rice-ghoul';
+    loadLocalDb();
+  }
+  render();
+}
+
+async function loadUserProfile() {
+  if (!state.firebaseUser) return;
   try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed.posts)) throw new Error('bad db');
-    return parsed;
-  } catch {
-    return { posts: seedPosts, createdAt: Date.now() };
+    const profile = await getUserProfile(state.firebaseUser.uid);
+    if (profile) {
+      state.handle = profile.handle;
+    } else {
+      await createUserProfile({ handle: state.handle });
+    }
+  } catch (e) {
+    console.warn('[ricehub] Failed to load user profile:', e);
   }
 }
 
-function saveDb() {
-  localStorage.setItem(DB_KEY, JSON.stringify(db));
+function loadLocalDb() {
+  const DB_KEY = 'ricehub.db.v1';
+  const USER_KEY = 'ricehub.handle.v1';
+  
+  const raw = localStorage.getItem(DB_KEY);
+  if (!raw) {
+    state.posts = seedPosts;
+    saveLocalDb();
+  } else {
+    try {
+      const parsed = JSON.parse(raw);
+      state.posts = Array.isArray(parsed.posts) ? parsed.posts : seedPosts;
+    } catch {
+      state.posts = seedPosts;
+      saveLocalDb();
+    }
+  }
+  
+  state.handle = localStorage.getItem(USER_KEY) || 'anonymous-rice-ghoul';
+}
+
+function saveLocalDb() {
+  const DB_KEY = 'ricehub.db.v1';
+  localStorage.setItem(DB_KEY, JSON.stringify({ posts: state.posts, createdAt: Date.now() }));
+  localStorage.setItem('ricehub.handle.v1', state.handle);
 }
 
 function setHandle(value) {
   const next = clean(value).replace(/\s+/g, '-').slice(0, 32) || 'anonymous-rice-ghoul';
   state.handle = next;
-  localStorage.setItem(USER_KEY, next);
+  
+  if (state.firebaseReady && state.firebaseUser) {
+    updateUserProfile({ handle: next }).catch(console.error);
+  } else {
+    localStorage.setItem('ricehub.handle.v1', next);
+  }
+  
   render();
 }
 
@@ -71,13 +165,19 @@ function clean(value) {
 }
 
 function esc(value) {
-  return String(value ?? '').replace(/[&<>'"]/g, ch => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-  }[ch]));
+  return String(value ?? '').replace(/[&<>'"]/g, ch => {
+    if (ch === '&') return '&';
+    if (ch === '<') return '<';
+    if (ch === '>') return '>';
+    if (ch === "'") return "\'";
+    if (ch === '"') return '"';
+    return ch;
+  });
 }
 
 function timeAgo(ts) {
-  const diff = Date.now() - ts;
+  if (!ts) return 'unknown';
+  const diff = Date.now() - (ts.toMillis ? ts.toMillis() : ts);
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return 'now';
   if (mins < 60) return `${mins}m`;
@@ -85,41 +185,41 @@ function timeAgo(ts) {
   if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}d`;
-  return new Date(ts).toLocaleDateString();
+  return new Date(ts.toMillis ? ts.toMillis() : ts).toLocaleDateString();
 }
 
 function postScore(post) {
-  return (post.likes?.length || 0) * 4 + (post.comments?.length || 0) * 2 + (post.saves?.length || 0) * 3;
+  return (post.likesCount || 0) * 4 + (post.commentsCount || 0) * 2 + (post.savesCount || 0) * 3;
 }
 
 function filteredPosts() {
   const q = state.query.toLowerCase();
-  let posts = [...db.posts];
-  if (state.component !== 'all') posts = posts.filter(p => p.component === state.component);
-  if (q) {
-    posts = posts.filter(p => [p.title, p.author, p.summary, p.component, p.distro, p.wm, ...(p.tags || [])]
-      .join(' ').toLowerCase().includes(q));
+  let posts = [...state.posts];
+  
+  if (state.component !== 'all') {
+    posts = posts.filter(p => p.component === state.component);
   }
+  
+  if (q) {
+    posts = posts.filter(p => 
+      [p.title, p.author, p.handle, p.summary, p.component, p.distro, p.wm, ...(p.tags || [])]
+        .join(' ').toLowerCase().includes(q)
+    );
+  }
+  
   posts.sort((a, b) => {
     if (state.sort === 'new') return b.createdAt - a.createdAt;
-    if (state.sort === 'saved') return (b.saves?.includes(state.handle) ? 1 : 0) - (a.saves?.includes(state.handle) ? 1 : 0);
+    if (state.sort === 'saved') return (b.savesCount || 0) - (a.savesCount || 0);
     return postScore(b) - postScore(a) || b.createdAt - a.createdAt;
   });
+  
   return posts;
-}
-
-function appStats() {
-  const posts = db.posts;
-  const components = new Set(posts.map(p => p.component)).size;
-  const assets = posts.reduce((n, p) => n + (p.attachments?.length || 0), 0);
-  const comments = posts.reduce((n, p) => n + (p.comments?.length || 0), 0);
-  return { posts: posts.length, components, assets, comments };
 }
 
 function render() {
   const root = document.getElementById('app');
-  const stats = appStats();
   const posts = filteredPosts();
+  
   root.innerHTML = `
     <header class="topbar">
       <a class="brand" href="#" data-action="home">
@@ -127,7 +227,12 @@ function render() {
         <span><b>ricehub</b><small>linux theming social index</small></span>
       </a>
       <nav>
-        <button data-action="toggle-composer">post rice</button>
+        ${state.firebaseReady ? `
+          <span data-action="auth-status" class="auth-badge">${state.firebaseUser ? `🔓 @${esc(state.handle)}` : '🔒 sign in'}</span>
+        ` : `
+          <span class="auth-badge local-mode">local storage</span>
+        `}
+        <button data-action="toggle-composer">${state.composerOpen ? 'close composer' : 'post rice'}</button>
         <button data-action="export">export db</button>
         <label class="import-label">import<input id="import-file" type="file" accept="application/json"></label>
       </nav>
@@ -141,16 +246,16 @@ function render() {
           <p class="lead">post plasma themes, sddm screens, kvantum configs, icon packs, wallpapers, widgets, screenshots, dotfiles. like the good ones. save the ones you will pretend to install later.</p>
         </div>
         <aside class="statbox" aria-label="local database stats">
-          <span><b>${stats.posts}</b> posts</span>
-          <span><b>${stats.components}</b> components</span>
-          <span><b>${stats.assets}</b> assets</span>
-          <span><b>${stats.comments}</b> comments</span>
+          <span><b>${state.posts.length}</b> posts</span>
+          <span><b>${new Set(state.posts.map(p => p.component)).size}</b> components</span>
+          <span><b>${state.posts.reduce((n, p) => n + (p.attachments?.length || 0), 0)}</b> assets</span>
+          <span><b>${state.posts.reduce((n, p) => n + (p.commentsCount || 0), 0)}</b> comments</span>
         </aside>
       </section>
 
       <section class="identity panel">
         <label>posting as <input id="handle-input" value="${esc(state.handle)}" maxlength="32"></label>
-        <p>local-first prototype. nothing leaves this browser yet. export json if you want to keep the little creature alive.</p>
+        <p>${state.firebaseReady ? 'firebase mode. changes sync across devices.' : 'local-first prototype. nothing leaves this browser yet. export json if you want to keep the little creature alive.'}</p>
       </section>
 
       ${state.composerOpen ? composerHtml() : ''}
@@ -173,7 +278,9 @@ function render() {
       </section>
     </main>
   `;
+  
   bindEvents();
+  bindPostEvents();
 }
 
 function composerHtml() {
@@ -211,8 +318,10 @@ function draftAssetsHtml() {
 }
 
 function postHtml(post) {
-  const liked = post.likes?.includes(state.handle);
-  const saved = post.saves?.includes(state.handle);
+  const liked = state.userLikes.has(post.id);
+  const saved = state.userSaves.has(post.id);
+  const isOwner = state.firebaseReady && state.firebaseUser && post.handle === state.firebaseUser.uid;
+  
   return `
     <article class="post panel" data-post-id="${post.id}">
       <div class="post-head">
@@ -231,18 +340,17 @@ function postHtml(post) {
       ${assetGalleryHtml(post.attachments || [])}
       ${linksHtml(post.links || [])}
       <div class="actions">
-        <button data-action="like">${liked ? 'unlike' : 'like'} <b>${post.likes?.length || 0}</b></button>
-        <button data-action="save">${saved ? 'saved' : 'save'} <b>${post.saves?.length || 0}</b></button>
-        <button data-action="copy-link">copy id</button>
+        <button data-action="like" data-post-id="${post.id}">${liked ? 'unlike' : 'like'} <b>${post.likesCount || 0}</b></button>
+        <button data-action="save" data-post-id="${post.id}">${saved ? 'saved' : 'save'} <b>${post.savesCount || 0}</b></button>
+        <button data-action="copy-link" data-post-id="${post.id}">copy id</button>
+        ${isOwner ? `<button data-action="delete" data-post-id="${post.id}">delete</button>` : ''}
       </div>
-      <details class="comments" ${post.comments?.length ? 'open' : ''}>
-        <summary>comments (${post.comments?.length || 0})</summary>
-        <div class="comment-list">
-          ${(post.comments || []).map(c => `<p><b>@${esc(c.author)}</b> <span>${timeAgo(c.createdAt)}</span><br>${esc(c.text)}</p>`).join('') || '<p class="muted">no comments. pristine and suspicious.</p>'}
-        </div>
-        <form class="comment-form">
+      <details class="comments" ${post.commentsCount ? 'open' : ''}>
+        <summary>comments (${post.commentsCount || 0})</summary>
+        <div class="comment-list" data-comments-for="${post.id}"></div>
+        <form class="comment-form" data-post-id="${post.id}">
           <input name="text" required maxlength="400" placeholder="leave install notes, praise, warnings...">
-          <button>comment</button>
+          <button type="submit">comment</button>
         </form>
       </details>
     </article>
@@ -252,8 +360,8 @@ function postHtml(post) {
 function assetGalleryHtml(assets) {
   if (!assets.length) return '<div class="no-assets">no files attached</div>';
   return `<div class="assets">${assets.map(a => {
-    if (a.kind === 'image' && a.dataUrl) return `<a href="${a.dataUrl}" target="_blank" class="shot"><img src="${a.dataUrl}" alt="${esc(a.name)}"><span>${esc(a.name)}</span></a>`;
-    if (a.dataUrl) return `<a download="${esc(a.name)}" href="${a.dataUrl}" class="file-card"><b>▤ ${esc(a.name)}</b><small>${formatBytes(a.size)} · download</small></a>`;
+    if (a.kind === 'image' && a.url) return `<a href="${a.url}" target="_blank" class="shot"><img src="${a.url}" alt="${esc(a.name)}"><span>${esc(a.name)}</span></a>`;
+    if (a.url) return `<a download="${esc(a.name)}" href="${a.url}" class="file-card"><b>▤ ${esc(a.name)}</b><small>${formatBytes(a.size)} · download</small></a>`;
     return `<div class="file-card"><b>▤ ${esc(a.name)}</b><small>${formatBytes(a.size)} · metadata only</small></div>`;
   }).join('')}</div>`;
 }
@@ -269,64 +377,156 @@ function emptyHtml() {
 }
 
 function bindEvents() {
-  document.querySelectorAll('[data-action="toggle-composer"]').forEach(btn => btn.addEventListener('click', () => {
-    state.composerOpen = !state.composerOpen;
-    render();
-  }));
-
+  document.querySelectorAll('[data-action="toggle-composer"]').forEach(btn => 
+    btn.addEventListener('click', () => { state.composerOpen = !state.composerOpen; render(); })
+  );
+  
   document.getElementById('handle-input')?.addEventListener('change', e => setHandle(e.target.value));
   document.getElementById('search')?.addEventListener('input', e => { state.query = e.target.value; render(); });
   document.getElementById('component-filter')?.addEventListener('change', e => { state.component = e.target.value; render(); });
   document.getElementById('sort-filter')?.addEventListener('change', e => { state.sort = e.target.value; render(); });
-
+  
   document.querySelector('[data-action="export"]')?.addEventListener('click', exportDb);
   document.getElementById('import-file')?.addEventListener('change', importDb);
   document.getElementById('asset-input')?.addEventListener('change', stageFiles);
   document.getElementById('post-form')?.addEventListener('submit', submitPost);
-
-  document.querySelectorAll('.post').forEach(postEl => {
-    const post = db.posts.find(p => p.id === postEl.dataset.postId);
-    postEl.querySelector('[data-action="like"]')?.addEventListener('click', () => toggleArray(post, 'likes'));
-    postEl.querySelector('[data-action="save"]')?.addEventListener('click', () => toggleArray(post, 'saves'));
-    postEl.querySelector('[data-action="copy-link"]')?.addEventListener('click', () => navigator.clipboard?.writeText(post.id));
-    postEl.querySelector('.comment-form')?.addEventListener('submit', e => addComment(e, post));
+  
+  // Auth status click
+  document.querySelector('[data-action="auth-status"]')?.addEventListener('click', () => {
+    alert(state.firebaseReady ? 
+      (state.firebaseUser ? 'signed in as ' + state.handle + '. firebase auth configured.' : 'not signed in. configure VITE_FIREBASE_* env vars and deploy to enable auth.') :
+      'localStorage mode. no firebase configured.'
+    );
   });
+}
 
-  document.querySelectorAll('[data-action="tag"]').forEach(btn => btn.addEventListener('click', () => {
-    state.query = btn.dataset.tag;
+function bindPostEvents() {
+  document.querySelectorAll('[data-action="like"]').forEach(btn => 
+    btn.addEventListener('click', () => handlePostAction('like', btn.dataset.postId))
+  );
+  document.querySelectorAll('[data-action="save"]').forEach(btn => 
+    btn.addEventListener('click', () => handlePostAction('save', btn.dataset.postId))
+  );
+  document.querySelectorAll('[data-action="copy-link"]').forEach(btn => 
+    btn.addEventListener('click', () => navigator.clipboard?.writeText(btn.dataset.postId))
+  );
+  document.querySelectorAll('[data-action="delete"]').forEach(btn => 
+    btn.addEventListener('click', () => handlePostAction('delete', btn.dataset.postId))
+  );
+  document.querySelectorAll('.comment-form').forEach(form => 
+    form.addEventListener('submit', (e) => handleCommentSubmit(e, form.dataset.postId))
+  );
+  document.querySelectorAll('[data-action="tag"]').forEach(btn => 
+    btn.addEventListener('click', () => { state.query = btn.dataset.tag; render(); })
+  );
+  
+  // Load comments for each post
+  document.querySelectorAll('.comment-list').forEach(el => {
+    const postId = el.dataset.commentsFor;
+    if (state.firebaseReady && state.firebaseUser) {
+      subscribeToComments(postId, (comments) => {
+        el.innerHTML = comments.length ? 
+          comments.map(c => `<p><b>@${esc(c.author)}</b> <span>${timeAgo(c.createdAt)}</span><br>${esc(c.text)}</p>`).join('') :
+          '<p class="muted">no comments. pristine and suspicious.</p>';
+      });
+    } else {
+      const post = state.posts.find(p => p.id === postId);
+      if (post?.comments?.length) {
+        el.innerHTML = post.comments.map(c => `<p><b>@${esc(c.author)}</b> <span>${timeAgo(c.createdAt)}</span><br>${esc(c.text)}</p>`).join('');
+      } else {
+        el.innerHTML = '<p class="muted">no comments. pristine and suspicious.</p>';
+      }
+    }
+  });
+}
+
+async function handlePostAction(action, postId) {
+  if (state.firebaseReady && state.firebaseUser) {
+    try {
+      if (action === 'like') {
+        await toggleLike(postId);
+        const liked = await isPostLiked(postId);
+        state.userLikes.set(postId, liked);
+      } else if (action === 'save') {
+        await toggleSave(postId);
+        const saved = await isPostSaved(postId);
+        state.userSaves.set(postId, saved);
+      } else if (action === 'delete') {
+        if (!confirm('delete this post?')) return;
+        await deletePost(postId);
+        state.posts = state.posts.filter(p => p.id !== postId);
+      }
+      render();
+    } catch (e) {
+      alert(`action failed: ${e.message}`);
+    }
+  } else {
+    // Local mode
+    const post = state.posts.find(p => p.id === postId);
+    if (!post) return;
+    
+    if (action === 'like') {
+      post.likes = post.likes || [];
+      const i = post.likes.indexOf(state.handle);
+      if (i >= 0) post.likes.splice(i, 1);
+      else post.likes.push(state.handle);
+      post.likesCount = post.likes.length;
+    } else if (action === 'save') {
+      post.saves = post.saves || [];
+      const i = post.saves.indexOf(state.handle);
+      if (i >= 0) post.saves.splice(i, 1);
+      else post.saves.push(state.handle);
+      post.savesCount = post.saves.length;
+    } else if (action === 'delete') {
+      if (!confirm('delete this post?')) return;
+      state.posts = state.posts.filter(p => p.id !== postId);
+    }
+    saveLocalDb();
     render();
-  }));
+  }
 }
 
-function toggleArray(post, key) {
-  post[key] ||= [];
-  const i = post[key].indexOf(state.handle);
-  if (i >= 0) post[key].splice(i, 1);
-  else post[key].push(state.handle);
-  saveDb();
-  render();
-}
-
-function addComment(event, post) {
+async function handleCommentSubmit(event, postId) {
   event.preventDefault();
   const input = event.currentTarget.elements.text;
   const text = clean(input.value);
   if (!text) return;
-  post.comments ||= [];
-  post.comments.push({ id: crypto.randomUUID(), author: state.handle, text, createdAt: Date.now() });
-  saveDb();
-  render();
+  
+  if (state.firebaseReady && state.firebaseUser) {
+    try {
+      await addComment(postId, text);
+      input.value = '';
+      render();
+    } catch (e) {
+      alert(`comment failed: ${e.message}`);
+    }
+  } else {
+    const post = state.posts.find(p => p.id === postId);
+    if (!post) return;
+    post.comments = post.comments || [];
+    post.comments.push({
+      id: crypto.randomUUID(),
+      author: state.handle,
+      text,
+      createdAt: Date.now()
+    });
+    post.commentsCount = post.comments.length;
+    saveLocalDb();
+    render();
+  }
 }
 
 async function stageFiles(event) {
   const files = [...event.target.files];
   const staged = [];
+  
   for (const file of files) {
     const kind = file.type.startsWith('image/') ? 'image' : 'file';
     const item = { id: crypto.randomUUID(), name: file.name, type: file.type || 'application/octet-stream', size: file.size, kind };
     if (file.size <= FILE_LIMIT) item.dataUrl = await readAsDataUrl(file);
     staged.push(item);
   }
+  
   state.drafts.attachments = staged;
   render();
 }
@@ -340,12 +540,11 @@ function readAsDataUrl(file) {
   });
 }
 
-function submitPost(event) {
+async function submitPost(event) {
   event.preventDefault();
   const form = new FormData(event.currentTarget);
-  const post = {
-    id: crypto.randomUUID(),
-    author: state.handle,
+  
+  const postData = {
     title: clean(form.get('title')),
     component: clean(form.get('component')),
     distro: clean(form.get('distro')),
@@ -354,21 +553,52 @@ function submitPost(event) {
     summary: clean(form.get('summary')),
     tags: clean(form.get('tags')).split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean),
     links: clean(form.get('links')).split(',').map(l => l.trim()).filter(Boolean),
-    attachments: state.drafts.attachments,
-    createdAt: Date.now(),
-    likes: [],
-    saves: [],
-    comments: []
+    attachments: state.drafts.attachments
   };
-  db.posts.unshift(post);
-  state.drafts.attachments = [];
-  state.composerOpen = false;
-  saveDb();
-  render();
+  
+  if (state.firebaseReady && state.firebaseUser) {
+    try {
+      // Upload attachments first
+      const postId = await createPost(postData);
+      for (const attachment of state.drafts.attachments) {
+        if (attachment.dataUrl) {
+          const blob = await (await fetch(attachment.dataUrl)).blob();
+          const file = new File([blob], attachment.name, { type: attachment.type });
+          await uploadAttachment(postId, file);
+        }
+      }
+      state.drafts.attachments = [];
+      state.composerOpen = false;
+      render();
+    } catch (e) {
+      alert(`publish failed: ${e.message}`);
+    }
+  } else {
+    // Local mode
+    const post = {
+      id: crypto.randomUUID(),
+      author: state.handle,
+      handle: state.handle,
+      ...postData,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      likesCount: 0,
+      savesCount: 0,
+      commentsCount: 0,
+      likes: [],
+      saves: [],
+      comments: []
+    };
+    state.posts.unshift(post);
+    state.drafts.attachments = [];
+    state.composerOpen = false;
+    saveLocalDb();
+    render();
+  }
 }
 
 function exportDb() {
-  const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ posts: state.posts, createdAt: Date.now() }, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -380,13 +610,14 @@ function exportDb() {
 function importDb(event) {
   const file = event.target.files?.[0];
   if (!file) return;
+  
   const reader = new FileReader();
   reader.onload = () => {
     try {
       const imported = JSON.parse(reader.result);
       if (!Array.isArray(imported.posts)) throw new Error('missing posts[]');
-      db = imported;
-      saveDb();
+      state.posts = imported.posts;
+      saveLocalDb();
       render();
     } catch (err) {
       alert(`bad ricehub export: ${err.message}`);
@@ -402,4 +633,6 @@ function formatBytes(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(1)}mb`;
 }
 
-render();
+init();
+
+export { state };
