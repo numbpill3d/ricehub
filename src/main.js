@@ -191,7 +191,7 @@ const THEME_OF_DAY = {
   description: 'clean nord-colored plasma theme with matching kvantum, sddm, and wallpaper. minimal, readable, perfect for long coding sessions.',
   tags: ['nord', 'minimal', 'kde', 'blue'],
   links: ['https://store.kde.org/p/1234567/'],
-  screenshot: null,
+  screenshot: 'https://raw.githubusercontent.com/numbpill3d/ricehub/main/assets/screenshots/nordic-kde.png',
   date: '2026-07-13'
 };
 
