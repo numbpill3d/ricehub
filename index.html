@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="ricehub: a social index for linux ricing themes, widgets, dotfiles, screenshots, assets, comments, saves, and likes. discover kde plasma, gtk, hyprland, sway, and terminal rice themes." />
-  <meta name="theme-color" content="#f0f0f0" />
+  <meta name="theme-color" content="#c0c0c0" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://numbpill3d.github.io/ricehub/" />
   
@@ -121,58 +121,39 @@
   
   <!-- Critical CSS inlined for performance -->
   <style>
-    /* Critical CSS inlined for FCP optimization */
+    /* Critical CSS inlined for FCP optimization - 90s terminal/webcore aesthetic */
     *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;background:#f0f0f0;color:#000;font:11px/1.4 Geneva,Helvetica,Arial,sans-serif;-webkit-font-smoothing:none;-moz-osx-font-smoothing:grayscale}
-    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(90deg,rgba(0,0,0,.03) 1px,transparent 1px),linear-gradient(0deg,rgba(0,0,0,.03) 1px,transparent 1px);background-size:2px 2px;pointer-events:none;z-index:9999}
-    .window{background:#fff;border:2px solid;border-color:#fff #808080 #808080 #fff;box-shadow:2px 2px 0 #808080,4px 4px 0 rgba(0,0,0,.1);position:relative}
-    .window::before{content:'';position:absolute;top:0;left:0;right:0;height:20px;background:linear-gradient(to bottom,#e8e8e8 0%,#c0c0c0 100%);border-bottom:1px solid #808080;display:flex;align-items:center;padding:0 8px;font:bold 11px Geneva,Helvetica,Arial,sans-serif;color:#000}
-    .titlebar{height:20px;background:linear-gradient(to bottom,#e8e8e8 0%,#c0c0c0 100%);border-bottom:1px solid #808080;display:flex;align-items:center;padding:0 8px;font:bold 11px Geneva,Helvetica,Arial,sans-serif;color:#000;user-select:none}
-    .titlebar .close-box{width:14px;height:14px;background:#fff;border:1px solid;border-color:#fff #808080 #808080 #fff;margin-right:8px;display:flex;align-items:center;justify-content:center;font:9px/1 Monaco,Chicago,Geneva,monospace;cursor:pointer}
-    .titlebar .close-box:hover{background:#ffe0e0}
+    html,body{height:100%;background:#c0c0c0;color:#000;font:11px/1.4 'Fixedsys','Terminal','Monaco','Courier New',monospace;-webkit-font-smoothing:none;-moz-osx-font-smoothing:grayscale}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(0deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:4px 4px;pointer-events:none;z-index:9999}
+    .window{background:#fff;border:2px solid;border-color:#fff #808080 #808080 #fff;box-shadow:2px 2px 0 #808080,4px 4px 0 rgba(0,0,0,.15);position:relative}
+    .window::before{content:'';position:absolute;top:0;left:0;right:0;height:20px;background:linear-gradient(to bottom,#dfdfdf 0%,#c0c0c0 100%);border-bottom:1px solid #808080;display:flex;align-items:center;padding:0 8px;font:bold 11px 'MS Sans Serif','Geneva',sans-serif;color:#000}
+    .titlebar{height:20px;background:linear-gradient(to bottom,#dfdfdf 0%,#c0c0c0 100%);border-bottom:1px solid #808080;display:flex;align-items:center;padding:0 8px;font:bold 11px 'MS Sans Serif','Geneva',sans-serif;color:#000;user-select:none}
+    .titlebar .close-box{width:16px;height:16px;background:#fff;border:1px solid;border-color:#fff #808080 #808080 #fff;margin-right:8px;display:flex;align-items:center;justify-content:center;font:9px/1 'Fixedsys',monospace;cursor:pointer}
+    .titlebar .close-box:hover{background:#000080;color:#fff;border-color:#000080}
     .titlebar .close-box:active{border-color:#808080 #fff #fff #808080}
-    .window-content{padding:12px;font:11px/1.5 Monaco,Chicago,Geneva,monospace}
-    .menubar{position:fixed;top:0;left:0;right:0;height:20px;background:linear-gradient(to bottom,#e8e8e8 0%,#c0c0c0 100%);border-bottom:1px solid #808080;display:flex;align-items:center;padding:0 8px;font:bold 11px Geneva,Helvetica,Arial,sans-serif;z-index:1000;user-select:none}
-    .menubar .apple{width:16px;height:16px;margin-right:12px}
-    .menubar .menu{padding:2px 8px;cursor:pointer}
-    .menubar .menu:hover{background:#000080;color:#fff}
-    .menubar-spacer{flex:1}
-    .menubar-clock{color:#404040;font:11px Monaco,Chicago,Geneva,monospace;padding-right:8px}
-    main{padding-top:24px}
-    .btn{font:11px Geneva,Helvetica,Arial,sans-serif;background:#f0f0f0;border:2px solid;border-color:#fff #808080 #808080 #fff;padding:3px 10px;cursor:pointer;color:#000}
-    .btn:hover{background:#e0e0e0}
-    .btn:active,.btn.pressed{border-color:#808080 #fff #fff #808080;background:#d0d0d0}
+    .window-content{padding:12px;font:11px/1.5 'Fixedsys','Terminal',monospace}
+    main{padding-top:0}
+    .btn{font:11px 'MS Sans Serif','Geneva',sans-serif;background:#c0c0c0;border:2px solid;border-color:#fff #808080 #808080 #fff;padding:3px 12px;cursor:pointer;color:#000}
+    .btn:hover{background:#dfdfdf}
+    .btn:active,.btn.pressed{border-color:#808080 #fff #fff #808080;background:#b0b0b0}
     .btn:disabled{color:#808080;cursor:default}
     .btn-primary{font-weight:bold}
-    input[type="text"],input[type="search"],input[type="email"],input[type="password"],input[type="number"],textarea,select{font:11px Monaco,Chicago,Geneva,monospace;background:#fff;border:2px inset #808080;padding:3px 6px;color:#000;outline:none}
+    input[type="text"],input[type="search"],input[type="email"],input[type="password"],input[type="number"],textarea,select{font:11px 'Fixedsys','Terminal',monospace;background:#fff;border:2px inset #808080;padding:3px 6px;color:#000;outline:none}
     input:focus,textarea:focus,select:focus{border-color:#000080}
     ::-webkit-scrollbar{width:16px;height:16px}
-    ::-webkit-scrollbar-track{background:#f0f0f0;border-left:1px solid #808080}
-    ::-webkit-scrollbar-thumb{background:#d4d0c8;border:1px solid;border-color:#fff #808080 #808080 #fff}
-    ::-webkit-scrollbar-thumb:hover{background:#a8a098}
-    ::-webkit-scrollbar-button{height:16px;background:#f0f0f0;border:1px solid;border-color:#fff #808080 #808080 #fff}
-    ::-webkit-scrollbar-button:vertical:decrement{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath fill='%23000' d='M5 10l3-4 3 4H5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center}
-    ::-webkit-scrollbar-button:vertical:increment{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath fill='%23000' d='M5 6l3 4 3-4H5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center}
-    ::-webkit-scrollbar-corner{background:#f0f0f0}
-    #app{max-width:720px;margin:0 auto;padding:0 12px 24px}
+    ::-webkit-scrollbar-track{background:#c0c0c0;border-left:1px solid #808080}
+    ::-webkit-scrollbar-thumb{background:#fff;border:1px solid;border-color:#dfdfdf #808080 #808080 #dfdfdf}
+    ::-webkit-scrollbar-thumb:hover{background:#e0e0e0}
+    ::-webkit-scrollbar-button{height:16px;background:#c0c0c0;border:1px solid;border-color:#fff #808080 #808080 #fff}
+    ::-webkit-scrollbar-button:vertical:decrement{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath fill='%23000' d='M4 11l4-5 4 5H4z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center}
+    ::-webkit-scrollbar-button:vertical:increment{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath fill='%23000' d='M4 5l4 5 4-5H4z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center}
+    ::-webkit-scrollbar-corner{background:#c0c0c0}
+    #app{max-width:100%;margin:0 auto;padding:0 8px 16px}
   </style>
   
   <title>ricehub // linux theming social index</title>
 </head>
 <body>
-  <div class="menubar" role="menubar" aria-label="macintosh menu bar">
-    <div class="apple" role="menuitem" aria-label="apple menu">🍎</div>
-    <div class="menu" role="menuitem" id="menu-ricehub">ricehub</div>
-    <div class="menu" role="menuitem" id="menu-file">file</div>
-    <div class="menu" role="menuitem" id="menu-edit">edit</div>
-    <div class="menu" role="menuitem" id="menu-view">view</div>
-    <div class="menu" role="menuitem" id="menu-go">go</div>
-    <div class="menu" role="menuitem" id="menu-window">window</div>
-    <div class="menu" role="menuitem" id="menu-help">help</div>
-    <div class="menubar-spacer"></div>
-    <div class="menubar-clock" id="menubar-clock" aria-live="polite">12:00 AM</div>
-  </div>
-  
   <main id="app" role="main"></main>
   
   <script type="module" src="/src/main.js"></script>
@@ -186,20 +167,6 @@
           .catch(err => console.log('[ricehub] SW registration failed:', err));
       });
     }
-    
-    // Update menubar clock
-    function updateClock() {
-      const clock = document.getElementById('menubar-clock');
-      if (clock) {
-        clock.textContent = new Date().toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: '2-digit', 
-          hour12: true 
-        }).toUpperCase();
-      }
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
   </script>
 </body>
 </html>
