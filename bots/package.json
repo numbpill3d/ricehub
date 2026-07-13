@@ -8,6 +8,7 @@
   "scripts": {
     "start": "node bot-runner.js",
     "dev": "node --watch bot-runner.js",
+    "backfill:screenshots": "node backfill-screenshots.js",
     "simulate": "node world-simulator.js",
     "simulate:dev": "node --watch world-simulator.js"
   },

@@ -14,6 +14,7 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { randomUUID } from 'crypto';
+import { screenshotFor } from './screenshot-catalog.js';
 
 // ============================================================
 // INITIALIZATION
@@ -450,6 +451,7 @@ async function ensureAllBots() {
 async function createPost(bot, theme) {
   const postRef = db.collection(CONFIG.collections.posts).doc();
   const postId = postRef.id;
+  const screenshot = screenshotFor(theme.title);
   
   const post = {
     ...theme,
@@ -461,7 +463,17 @@ async function createPost(bot, theme) {
     likesCount: 0,
     savesCount: 0,
     commentsCount: 0,
-    attachments: [],
+    image: screenshot.url,
+    imageSource: screenshot.source,
+    links: [...new Set([...(theme.links || []), screenshot.source])],
+    attachments: [{
+      id: randomUUID(),
+      name: screenshot.filename,
+      type: 'image/webp',
+      kind: 'image',
+      url: screenshot.url,
+      source: screenshot.source,
+    }],
   };
   
   await postRef.set(post);

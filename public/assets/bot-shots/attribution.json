@@ -1,0 +1,42 @@
+{
+  "nordic-kde.webp": {
+    "source": "https://github.com/EliverLara/Nordic-kde/blob/master/preview/preview.png",
+    "project": "EliverLara/Nordic-kde"
+  },
+  "tokyo-night.webp": {
+    "source": "https://github.com/rxyhn/bspdots/blob/main/TokyoNight.png",
+    "project": "rxyhn/bspdots"
+  },
+  "catppuccin-sddm.webp": {
+    "source": "https://github.com/Keyitdev/screenshots/blob/master/sddm-astronaut-theme/master/purple_leaves.png",
+    "project": "Keyitdev/sddm-astronaut-theme"
+  },
+  "material-you.webp": {
+    "source": "https://github.com/koeqaife/hyprland-material-you/blob/v2/assets/screenshot.png",
+    "project": "koeqaife/hyprland-material-you"
+  },
+  "gruvbox-material.webp": {
+    "source": "https://github.com/Frost-Phoenix/nixos-config/blob/main/.github/assets/screenshots/1.png",
+    "project": "Frost-Phoenix/nixos-config"
+  },
+  "rose-pine.webp": {
+    "source": "https://github.com/iamverysimp1e/dots/blob/main/ScreenShots/Gnome_Rice/Rice1.png",
+    "project": "iamverysimp1e/dots"
+  },
+  "everforest-eww.webp": {
+    "source": "https://github.com/flick0/dotfiles/blob/dreamy/assets/cava.png",
+    "project": "flick0/dotfiles"
+  },
+  "dracula-plasma.webp": {
+    "source": "https://github.com/gh0stzk/dotfiles",
+    "project": "gh0stzk/dotfiles"
+  },
+  "nordic-walls.webp": {
+    "source": "https://github.com/1amSimp1e/dots/blob/summer%E2%98%80%EF%B8%8F/ScreenShots/summer.png",
+    "project": "1amSimp1e/dots"
+  },
+  "monochrome-dots.webp": {
+    "source": "https://github.com/ryan4yin/nix-config/blob/main/_img/2026-01-05_niri-noctalia_desktop.webp",
+    "project": "ryan4yin/nix-config"
+  }
+}
