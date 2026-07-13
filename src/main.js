@@ -696,7 +696,7 @@ function homeViewHtml() {
                 ${themeOfDay.links.length ? `<div class="theme-links">${themeOfDay.links.map(l => `<a href="${esc(l)}" target="_blank" rel="noopener">${esc(l)}</a>`).join('')}</div>` : ''}
               </div>
               <div class="tod-screenshot">
-                ${themeOfDay.screenshot ? `<img src="${esc(themeOfDay.screenshot)}" alt="${esc(themeOfDay.name)}">` : '<div class="placeholder-shot">📷</div>'}
+                ${themeOfDay.screenshot ? `<img src="${esc(themeOfDay.screenshot)}" alt="${esc(themeOfDay.name)}">` : ''}
               </div>
             </div>
           </section>
