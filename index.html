@@ -3,11 +3,203 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="ricehub: a social index for linux ricing themes, widgets, dotfiles, screenshots, assets, comments, saves, and likes." />
-  <title>ricehub // linux theming index</title>
+  <meta name="description" content="ricehub: a social index for linux ricing themes, widgets, dotfiles, screenshots, assets, comments, saves, and likes. discover kde plasma, gtk, hyprland, sway, and terminal rice themes." />
+  <meta name="theme-color" content="#f0f0f0" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://numbpill3d.github.io/ricehub/" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://numbpill3d.github.io/ricehub/" />
+  <meta property="og:title" content="ricehub // linux theming social index" />
+  <meta property="og:description" content="discover and share linux ricing themes: kde plasma, gtk, hyprland, sway, waybar, rofi, terminal, and more. profiles, auth, comments, saves, likes." />
+  <meta property="og:image" content="https://numbpill3d.github.io/ricehub/og-image.png" />
+  <meta property="og:site_name" content="ricehub" />
+  <meta property="og:locale" content="en_US" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://numbpill3d.github.io/ricehub/" />
+  <meta name="twitter:title" content="ricehub // linux theming social index" />
+  <meta name="twitter:description" content="discover and share linux ricing themes: kde plasma, gtk, hyprland, sway, waybar, rofi, terminal, and more." />
+  <meta name="twitter:image" content="https://numbpill3d.github.io/ricehub/og-image.png" />
+  <meta name="twitter:site" content="@numbpill3d" />
+  <meta name="twitter:creator" content="@numbpill3d" />
+  
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json" id="json-ld-schema">
+  {
+    "@context": "https://schema.org",
+    "@type": "SocialMediaPosting",
+    "@id": "https://numbpill3d.github.io/ricehub/#website",
+    "name": "ricehub",
+    "alternateName": "linux theming social index",
+    "description": "a social index for linux ricing themes, widgets, dotfiles, screenshots, assets, comments, saves, and likes",
+    "url": "https://numbpill3d.github.io/ricehub/",
+    "logo": "https://numbpill3d.github.io/ricehub/icon-192.png",
+    "sameAs": [
+      "https://github.com/numbpill3d/ricehub",
+      "https://github.com/numbpill3d"
+    ],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://numbpill3d.github.io/ricehub/#feed?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  
+  <!-- JSON-LD WebSite -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "ricehub",
+    "alternateName": "linux theming social index",
+    "url": "https://numbpill3d.github.io/ricehub/",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://numbpill3d.github.io/ricehub/#feed?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  
+  <!-- JSON-LD Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "ricehub",
+    "url": "https://numbpill3d.github.io/ricehub/",
+    "logo": "https://numbpill3d.github.io/ricehub/icon-192.png",
+    "sameAs": [
+      "https://github.com/numbpill3d/ricehub"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "community",
+      "url": "https://github.com/numbpill3d/ricehub/issues"
+    }
+  }
+  </script>
+  
+  <!-- JSON-LD ItemList for theme index -->
+  <script type="application/ld+json" id="json-ld-themes">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Linux Ricing Themes Index",
+    "description": "Community-curated linux theming themes and configurations",
+    "itemListElement": []
+  }
+  </script>
+  
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/rss+xml" title="ricehub latest themes" href="/rss.xml" />
+  <link rel="alternate" type="application/atom+xml" title="ricehub latest themes" href="/atom.xml" />
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="ricehub" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  
+  <!-- Favicons -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#000080" />
+  
+  <!-- Preconnect for external resources -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="https://www.gstatic.com" />
+  <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
+  
+  <!-- Critical CSS inlined for performance -->
+  <style>
+    /* Critical CSS inlined for FCP optimization */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:#f0f0f0;color:#000;font:11px/1.4 Geneva,Helvetica,Arial,sans-serif;-webkit-font-smoothing:none;-moz-osx-font-smoothing:grayscale}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(90deg,rgba(0,0,0,.03) 1px,transparent 1px),linear-gradient(0deg,rgba(0,0,0,.03) 1px,transparent 1px);background-size:2px 2px;pointer-events:none;z-index:9999}
+    .window{background:#fff;border:2px solid;border-color:#fff #808080 #808080 #fff;box-shadow:2px 2px 0 #808080,4px 4px 0 rgba(0,0,0,.1);position:relative}
+    .window::before{content:'';position:absolute;top:0;left:0;right:0;height:20px;background:linear-gradient(to bottom,#e8e8e8 0%,#c0c0c0 100%);border-bottom:1px solid #808080;display:flex;align-items:center;padding:0 8px;font:bold 11px Geneva,Helvetica,Arial,sans-serif;color:#000}
+    .titlebar{height:20px;background:linear-gradient(to bottom,#e8e8e8 0%,#c0c0c0 100%);border-bottom:1px solid #808080;display:flex;align-items:center;padding:0 8px;font:bold 11px Geneva,Helvetica,Arial,sans-serif;color:#000;user-select:none}
+    .titlebar .close-box{width:14px;height:14px;background:#fff;border:1px solid;border-color:#fff #808080 #808080 #fff;margin-right:8px;display:flex;align-items:center;justify-content:center;font:9px/1 Monaco,Chicago,Geneva,monospace;cursor:pointer}
+    .titlebar .close-box:hover{background:#ffe0e0}
+    .titlebar .close-box:active{border-color:#808080 #fff #fff #808080}
+    .window-content{padding:12px;font:11px/1.5 Monaco,Chicago,Geneva,monospace}
+    .menubar{position:fixed;top:0;left:0;right:0;height:20px;background:linear-gradient(to bottom,#e8e8e8 0%,#c0c0c0 100%);border-bottom:1px solid #808080;display:flex;align-items:center;padding:0 8px;font:bold 11px Geneva,Helvetica,Arial,sans-serif;z-index:1000;user-select:none}
+    .menubar .apple{width:16px;height:16px;margin-right:12px}
+    .menubar .menu{padding:2px 8px;cursor:pointer}
+    .menubar .menu:hover{background:#000080;color:#fff}
+    .menubar-spacer{flex:1}
+    .menubar-clock{color:#404040;font:11px Monaco,Chicago,Geneva,monospace;padding-right:8px}
+    main{padding-top:24px}
+    .btn{font:11px Geneva,Helvetica,Arial,sans-serif;background:#f0f0f0;border:2px solid;border-color:#fff #808080 #808080 #fff;padding:3px 10px;cursor:pointer;color:#000}
+    .btn:hover{background:#e0e0e0}
+    .btn:active,.btn.pressed{border-color:#808080 #fff #fff #808080;background:#d0d0d0}
+    .btn:disabled{color:#808080;cursor:default}
+    .btn-primary{font-weight:bold}
+    input[type="text"],input[type="search"],input[type="email"],input[type="password"],input[type="number"],textarea,select{font:11px Monaco,Chicago,Geneva,monospace;background:#fff;border:2px inset #808080;padding:3px 6px;color:#000;outline:none}
+    input:focus,textarea:focus,select:focus{border-color:#000080}
+    ::-webkit-scrollbar{width:16px;height:16px}
+    ::-webkit-scrollbar-track{background:#f0f0f0;border-left:1px solid #808080}
+    ::-webkit-scrollbar-thumb{background:#d4d0c8;border:1px solid;border-color:#fff #808080 #808080 #fff}
+    ::-webkit-scrollbar-thumb:hover{background:#a8a098}
+    ::-webkit-scrollbar-button{height:16px;background:#f0f0f0;border:1px solid;border-color:#fff #808080 #808080 #fff}
+    ::-webkit-scrollbar-button:vertical:decrement{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath fill='%23000' d='M5 10l3-4 3 4H5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center}
+    ::-webkit-scrollbar-button:vertical:increment{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath fill='%23000' d='M5 6l3 4 3-4H5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center}
+    ::-webkit-scrollbar-corner{background:#f0f0f0}
+    #app{max-width:720px;margin:0 auto;padding:0 12px 24px}
+  </style>
+  
+  <title>ricehub // linux theming social index</title>
 </head>
 <body>
-  <div id="app"></div>
+  <div class="menubar" role="menubar" aria-label="macintosh menu bar">
+    <div class="apple" role="menuitem" aria-label="apple menu">🍎</div>
+    <div class="menu" role="menuitem" id="menu-ricehub">ricehub</div>
+    <div class="menu" role="menuitem" id="menu-file">file</div>
+    <div class="menu" role="menuitem" id="menu-edit">edit</div>
+    <div class="menu" role="menuitem" id="menu-view">view</div>
+    <div class="menu" role="menuitem" id="menu-go">go</div>
+    <div class="menu" role="menuitem" id="menu-window">window</div>
+    <div class="menu" role="menuitem" id="menu-help">help</div>
+    <div class="menubar-spacer"></div>
+    <div class="menubar-clock" id="menubar-clock" aria-live="polite">12:00 AM</div>
+  </div>
+  
+  <main id="app" role="main"></main>
+  
   <script type="module" src="/src/main.js"></script>
+  
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('[ricehub] SW registered:', reg.scope))
+          .catch(err => console.log('[ricehub] SW registration failed:', err));
+      });
+    }
+    
+    // Update menubar clock
+    function updateClock() {
+      const clock = document.getElementById('menubar-clock');
+      if (clock) {
+        clock.textContent = new Date().toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit', 
+          hour12: true 
+        }).toUpperCase();
+      }
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
 </body>
 </html>

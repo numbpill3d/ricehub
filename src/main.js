@@ -29,6 +29,190 @@ import {
   uploadAvatar
 } from './firebase-service.js';
 
+// ===== Theme Management =====
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('ricehub-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+  return theme;
+}
+
+// Initialize theme immediately
+initTheme();
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('ricehub-theme', newTheme);
+  return newTheme;
+}
+
+// ===== SEO & Meta Tag Management =====
+
+const BASE_URL = 'https://numbpill3d.github.io/ricehub';
+const SITE_NAME = 'ricehub';
+const SITE_DESCRIPTION = 'linux theming social index - discover and share kde plasma, gtk, hyprland, sway, waybar, rofi, terminal rice themes';
+
+function updateMetaTags(meta) {
+  const { title, description, url, image, type = 'website', card = 'summary_large_image' } = meta;
+  
+  // Update document title
+  document.title = title || `${SITE_NAME} // linux theming social index`;
+  
+  // Update or create meta tags
+  const updateTag = (selector, attr, value) => {
+    if (!value) return;
+    let el = document.querySelector(selector);
+    if (!el) {
+      el = document.createElement('meta');
+      if (selector.startsWith('meta[property') || selector.startsWith('meta[name')) {
+        const match = selector.match(/\[(property|name)="([^"]+)"\]/);
+        if (match) {
+          el.setAttribute(match[1], match[2]);
+        }
+      }
+      document.head.appendChild(el);
+    }
+    el.setAttribute(attr, value);
+  };
+  
+  // Standard meta tags
+  updateTag('meta[name="description"]', 'content', description);
+  updateTag('meta[name="twitter:card"]', 'content', card);
+  updateTag('meta[name="twitter:title"]', 'content', title);
+  updateTag('meta[name="twitter:description"]', 'content', description);
+  updateTag('meta[name="twitter:image"]', 'content', image);
+  updateTag('meta[property="og:title"]', 'content', title);
+  updateTag('meta[property="og:description"]', 'content', description);
+  updateTag('meta[property="og:image"]', 'content', image);
+  updateTag('meta[property="og:url"]', 'content', url);
+  updateTag('meta[property="og:type"]', 'content', type);
+  updateTag('link[rel="canonical"]', 'href', url);
+  
+  // Update JSON-LD schema
+  updateJsonLd(meta);
+}
+
+function updateJsonLd(meta) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': meta.type === 'article' ? 'BlogPosting' : 'WebPage',
+    name: meta.title,
+    description: meta.description,
+    url: meta.url,
+    image: meta.image,
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${BASE_URL}/icon-192.png`
+      }
+    },
+    ...(meta.type === 'article' && {
+      author: {
+        '@type': 'Person',
+        name: meta.author || 'ricehub community'
+      },
+      datePublished: meta.datePublished,
+      dateModified: meta.dateModified,
+      articleSection: meta.section || 'Linux Theming',
+      keywords: meta.tags?.join(', ') || 'linux, ricing, themes, kde, gtk, hyprland, sway'
+    })
+  };
+  
+  let script = document.getElementById('json-ld-dynamic');
+  if (!script) {
+    script = document.createElement('script');
+    script.id = 'json-ld-dynamic';
+    script.type = 'application/ld+json';
+    document.head.appendChild(script);
+  }
+  script.textContent = JSON.stringify(schema, null, 2);
+}
+
+function getViewMeta(view, data = {}) {
+  const baseMeta = {
+    title: `${SITE_NAME} // linux theming social index`,
+    description: SITE_DESCRIPTION,
+    url: BASE_URL,
+    image: `${BASE_URL}/og-image.png`,
+    type: 'website',
+    card: 'summary_large_image'
+  };
+  
+  switch (view) {
+    case 'home':
+      return {
+        ...baseMeta,
+        title: 'ricehub // linux theming social index',
+        description: 'discover and share linux ricing themes: kde plasma, gtk, hyprland, sway, waybar, rofi, terminal, and more. profiles, auth, comments, saves, likes.',
+        url: BASE_URL + '/',
+      };
+      
+    case 'feed':
+      return {
+        ...baseMeta,
+        title: 'all themes - ricehub',
+        description: 'browse all linux ricing themes. filter by component: kde plasma, gtk, hyprland, sway, waybar, rofi, terminal, sddm, kvantum, and more.',
+        url: BASE_URL + '/#feed',
+      };
+      
+    case 'composer':
+      return {
+        ...baseMeta,
+        title: 'post a theme - ricehub',
+        description: 'share your linux rice theme with the community. include screenshots, config files, and installation notes.',
+        url: BASE_URL + '/#composer',
+      };
+      
+    case 'profile':
+      return {
+        ...baseMeta,
+        title: `@${data.handle} - ricehub`,
+        description: `${data.bio || 'linux ricer'} · ${data.postCount || 0} themes · joined ${data.joined || 'recently'}`,
+        url: BASE_URL + `/#profile/${data.handle}`,
+        type: 'profile',
+        author: data.handle,
+      };
+      
+    case 'post':
+      return {
+        ...baseMeta,
+        title: `${data.title} - ricehub`,
+        description: data.summary || SITE_DESCRIPTION,
+        url: BASE_URL + `/#post/${data.id}`,
+        image: data.image || baseMeta.image,
+        type: 'article',
+        author: data.author,
+        datePublished: data.createdAt,
+        dateModified: data.updatedAt,
+        section: data.component,
+        tags: data.tags,
+      };
+      
+    case 'auth':
+      return {
+        ...baseMeta,
+        title: 'sign in - ricehub',
+        description: 'sign in or create an account to like, save, comment, and post themes on ricehub.',
+        url: BASE_URL + '/#auth',
+        type: 'webpage',
+      };
+      
+    default:
+      return baseMeta;
+  }
+}
+
+function setViewMeta(view, data = {}) {
+  const meta = getViewMeta(view, data);
+  updateMetaTags(meta);
+}
+
 const COMPONENTS = [
   'sddm', 'plasma', 'aurorae', 'kvantum', 'gtk', 'icons', 'cursors',
   'colorscheme', 'wallpaper', 'eww', 'waybar', 'rofi', 'conky', 'terminal',
@@ -514,6 +698,7 @@ async function submitPost(event) {
 function setView(view) {
   state.view = view;
   window.location.hash = view;
+  setViewMeta(view, { handle: state.handle });
 }
 
 function formatBytes(bytes) {
@@ -545,6 +730,9 @@ function homeViewHtml() {
   const recentUsers = getRecentUsers(5);
   const themeOfDay = getThemeOfDay();
   
+  // Set meta tags for home view
+  setViewMeta('home');
+  
   return `
     <header class="topbar">
       <a class="brand" href="#home" data-action="home">
@@ -557,17 +745,20 @@ function homeViewHtml() {
         ` : `
           <span class="auth-badge local-mode">local storage</span>
         `}
+        <button data-action="toggle-theme" aria-label="Toggle dark mode" title="Toggle theme">
+          ${document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'}
+        </button>
         <button data-action="toggle-composer">${state.composerOpen ? 'close composer' : 'post theme'}</button>
         <button data-action="export">export db</button>
         <label class="import-label">import<input id="import-file" type="file" accept="application/json"></label>
       </nav>
     </header>
 
-    <main class="shell">
+    <main class="shell" role="main">
       <!-- news bar -->
-      <section class="news-bar panel">
+      <section class="news-bar panel" aria-labelledby="news-heading">
         <div class="news-header">
-          <span class="eyebrow">📰 news</span>
+          <span class="eyebrow" id="news-heading">📰 news</span>
           <span class="news-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
         </div>
         <div class="news-items">
@@ -585,9 +776,9 @@ function homeViewHtml() {
         <!-- left column -->
         <div class="main-col">
           <!-- theme of the day -->
-          <section class="theme-of-day panel">
+          <section class="theme-of-day panel" aria-labelledby="theme-of-day-heading">
             <div class="theme-header">
-              <span class="eyebrow">⭐ theme of the day</span>
+              <span class="eyebrow" id="theme-of-day-heading">⭐ theme of the day</span>
               <span class="theme-date">${esc(themeOfDay.date)}</span>
             </div>
             <div class="theme-content">
@@ -608,27 +799,27 @@ function homeViewHtml() {
           </section>
 
           <!-- latest posts -->
-          <section class="latest-posts panel">
+          <section class="latest-posts panel" aria-labelledby="latest-posts-heading">
             <div class="section-header">
-              <span class="eyebrow">🆕 latest posts</span>
+              <span class="eyebrow" id="latest-posts-heading">🆕 latest posts</span>
               <a href="#feed" data-action="view-feed" class="view-all">view all</a>
             </div>
-            <div class="feed">
+            <div class="feed" role="feed">
               ${posts.slice(0, 5).length ? posts.slice(0, 5).map(postHtml).join('') : emptyHtml()}
             </div>
           </section>
         </div>
 
         <!-- right sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" role="complementary">
           <!-- new members -->
-          <section class="panel">
+          <section class="panel" aria-labelledby="new-members-heading">
             <div class="section-header">
-              <span class="eyebrow">👤 new members</span>
+              <span class="eyebrow" id="new-members-heading">👤 new members</span>
             </div>
             <ul class="user-list">
               ${recentUsers.map(u => `
-                <li class="user-item" data-user="${esc(u.handle)}">
+                <li class="user-item" data-user="${esc(u.handle)}" role="button" tabindex="0" aria-label="View @${esc(u.handle)}'s profile">
                   <div class="user-avatar">${esc(u.handle[0].toUpperCase())}</div>
                   <div class="user-info">
                     <strong>@${esc(u.handle)}</strong>
@@ -640,14 +831,14 @@ function homeViewHtml() {
           </section>
 
           <!-- external links -->
-          <section class="panel">
+          <section class="panel" aria-labelledby="resources-heading">
             <div class="section-header">
-              <span class="eyebrow">🔗 resources</span>
+              <span class="eyebrow" id="resources-heading">🔗 resources</span>
             </div>
             <ul class="link-list">
               ${state.externalLinks.map(l => `
                 <li>
-                  <a href="${esc(l.url)}" target="_blank" rel="noopener">
+                  <a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">
                     <strong>${esc(l.name)}</strong>
                     <span>${esc(l.desc)}</span>
                   </a>
@@ -657,9 +848,9 @@ function homeViewHtml() {
           </section>
 
           <!-- stats -->
-          <section class="panel">
+          <section class="panel" aria-labelledby="stats-heading">
             <div class="section-header">
-              <span class="eyebrow">📊 stats</span>
+              <span class="eyebrow" id="stats-heading">📊 stats</span>
             </div>
             <div class="statbox">
               <span><b>${state.posts.length}</b> themes</span>
@@ -673,20 +864,23 @@ function homeViewHtml() {
       </div>
 
       <!-- identity -->
-      <section class="identity panel">
-        <label>posting as <input id="handle-input" value="${esc(state.handle)}" maxlength="32"></label>
+      <section class="identity panel" aria-labelledby="identity-heading">
+        <label id="identity-heading">posting as <input id="handle-input" value="${esc(state.handle)}" maxlength="32"></label>
         <p>${state.firebaseReady ? 'firebase mode. changes sync across devices.' : 'local-first prototype. nothing leaves this browser yet. export json if you want to keep the little creature alive.'}</p>
       </section>
 
       ${state.composerOpen ? composerHtml() : ''}
 
-      <section class="filters panel">
-        <input id="search" placeholder="search tags, wm, distro, title..." value="${esc(state.query)}">
-        <select id="component-filter">
+      <section class="filters panel" aria-labelledby="filters-heading">
+        <label for="search" class="visually-hidden">Search themes</label>
+        <input id="search" placeholder="search tags, wm, distro, title..." value="${esc(state.query)}" aria-label="Search themes by tags, window manager, distro, or title">
+        <label for="component-filter" class="visually-hidden">Filter by component</label>
+        <select id="component-filter" aria-label="Filter by component type">
           <option value="all">all components</option>
           ${COMPONENTS.map(c => `<option value="${c}" ${state.component === c ? 'selected' : ''}>${c}</option>`).join('')}
         </select>
-        <select id="sort-filter">
+        <label for="sort-filter" class="visually-hidden">Sort by</label>
+        <select id="sort-filter" aria-label="Sort posts by">
           <option value="hot" ${state.sort === 'hot' ? 'selected' : ''}>hot</option>
           <option value="new" ${state.sort === 'new' ? 'selected' : ''}>new</option>
           <option value="saved" ${state.sort === 'saved' ? 'selected' : ''}>saved first</option>
@@ -702,6 +896,15 @@ function profileViewHtml() {
   
   const userPosts = state.posts.filter(p => p.handle === profile.handle);
   
+  // Set meta tags for profile view
+  const joined = profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'recently';
+  setViewMeta('profile', { 
+    handle: profile.handle, 
+    bio: profile.bio, 
+    postCount: userPosts.length,
+    joined 
+  });
+  
   return `
     <header class="topbar">
       <a class="brand" href="#home" data-action="home">
@@ -712,28 +915,31 @@ function profileViewHtml() {
         ${state.firebaseReady ? `
           <span data-action="auth-status" class="auth-badge">${state.firebaseUser ? `🔓 @${esc(state.handle)}` : '🔒 sign in'}</span>
         ` : `<span class="auth-badge local-mode">local storage</span>`}
+        <button data-action="toggle-theme" aria-label="Toggle dark mode" title="Toggle theme">
+          ${document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'}
+        </button>
         <button data-action="view-home">← home</button>
       </nav>
     </header>
 
-    <main class="shell">
-      <section class="profile-header panel">
-        <div class="profile-avatar-large">${esc(profile.handle[0].toUpperCase())}</div>
-        <h2>@${esc(profile.handle)}</h2>
+    <main class="shell" role="main">
+      <section class="profile-header panel" aria-labelledby="profile-name">
+        <div class="profile-avatar-large" aria-hidden="true">${esc(profile.handle[0].toUpperCase())}</div>
+        <h2 id="profile-name">@${esc(profile.handle)}</h2>
         <p class="profile-bio">${esc(profile.bio || 'no bio yet')}</p>
         ${profile.links.length ? `
           <div class="profile-links">
-            ${profile.links.map(l => `<a href="${esc(l)}" target="_blank" rel="noopener">${esc(l)}</a>`).join('')}
+            ${profile.links.map(l => `<a href="${esc(l)}" target="_blank" rel="noopener noreferrer">${esc(l)}</a>`).join('')}
           </div>
         ` : ''}
         <p class="profile-meta">joined ${timeAgo(profile.createdAt)} · ${userPosts.length} themes</p>
       </section>
 
-      <section class="panel">
+      <section class="panel" aria-labelledby="user-themes-heading">
         <div class="section-header">
-          <span class="eyebrow">📦 themes by @${esc(profile.handle)}</span>
+          <span class="eyebrow" id="user-themes-heading">📦 themes by @${esc(profile.handle)}</span>
         </div>
-        <div class="feed">
+        <div class="feed" role="feed">
           ${userPosts.length ? userPosts.map(postHtml).join('') : '<p class="muted">no themes posted yet</p>'}
         </div>
       </section>
@@ -742,6 +948,8 @@ function profileViewHtml() {
 }
 
 function authViewHtml() {
+  setViewMeta('auth');
+  
   return `
     <header class="topbar">
       <a class="brand" href="#home" data-action="home">
@@ -749,34 +957,37 @@ function authViewHtml() {
         <span><b>ricehub</b><small>linux theming social index</small></span>
       </a>
       <nav>
+        <button data-action="toggle-theme" aria-label="Toggle dark mode" title="Toggle theme">
+          ${document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'}
+        </button>
         <button data-action="view-home">← home</button>
       </nav>
     </header>
 
-    <main class="shell">
-      <section class="auth-panel panel">
-        <h2>${state.authMode === 'login' ? 'sign in' : 'create account'}</h2>
+    <main class="shell" role="main">
+      <section class="auth-panel panel" aria-labelledby="auth-heading">
+        <h2 id="auth-heading">${state.authMode === 'login' ? 'sign in' : 'create account'}</h2>
         <p class="auth-subtitle">${state.authMode === 'login' ? 'enter your credentials' : 'join the ricehub community'}</p>
         
         <form id="auth-form">
           ${state.authMode === 'signup' ? `
-            <label>
+            <label for="auth-handle">
               handle
-              <input name="handle" type="text" required maxlength="32" placeholder="your-handle" autocomplete="username">
+              <input id="auth-handle" name="handle" type="text" required maxlength="32" placeholder="your-handle" autocomplete="username">
             </label>
           ` : ''}
-          <label>
+          <label for="auth-email">
             email
-            <input name="email" type="email" required placeholder="you@example.com" autocomplete="email">
+            <input id="auth-email" name="email" type="email" required placeholder="you@example.com" autocomplete="email">
           </label>
-          <label>
+          <label for="auth-password">
             password
-            <input name="password" type="password" required minlength="6" placeholder="••••••••" autocomplete="${state.authMode === 'login' ? 'current-password' : 'new-password'}">
+            <input id="auth-password" name="password" type="password" required minlength="6" placeholder="••••••••" autocomplete="${state.authMode === 'login' ? 'current-password' : 'new-password'}">
           </label>
           ${state.authMode === 'signup' ? `
-            <label>
+            <label for="auth-confirm">
               confirm password
-              <input name="confirmPassword" type="password" required minlength="6" placeholder="••••••••" autocomplete="new-password">
+              <input id="auth-confirm" name="confirmPassword" type="password" required minlength="6" placeholder="••••••••" autocomplete="new-password">
             </label>
           ` : ''}
           <button class="primary" type="submit">${state.authMode === 'login' ? 'sign in' : 'create account'}</button>
@@ -798,23 +1009,25 @@ function authViewHtml() {
 }
 
 function composerHtml() {
+  setViewMeta('composer');
+  
   return `
-    <section class="composer panel">
+    <section class="composer panel" aria-labelledby="composer-heading">
       <div class="section-header">
-        <span class="eyebrow">📝 new theme</span>
+        <span class="eyebrow" id="composer-heading">📝 new theme</span>
         <button data-action="toggle-composer">close</button>
       </div>
       <form id="post-form">
         <div class="grid2">
-          <label>title<input name="title" required maxlength="90" placeholder="nordic-kde plasma theme + kvantum"></label>
-          <label>component<select name="component">${COMPONENTS.map(c => `<option value="${c}">${c}</option>`).join('')}</select></label>
-          <label>distro<input name="distro" placeholder="arch, nixos, fedora..."></label>
-          <label>wm/de<input name="wm" placeholder="kde, hyprland, sway..."></label>
-          <label>license<input name="license" placeholder="mit, gpl, cc-by, unknown"></label>
-          <label>links<input name="links" placeholder="repo/demo/source urls, comma separated"></label>
+          <label for="post-title">title<input id="post-title" name="title" required maxlength="90" placeholder="nordic-kde plasma theme + kvantum"></label>
+          <label for="post-component">component<select id="post-component" name="component">${COMPONENTS.map(c => `<option value="${c}">${c}</option>`).join('')}</select></label>
+          <label for="post-distro">distro<input id="post-distro" name="distro" placeholder="arch, nixos, fedora..."></label>
+          <label for="post-wm">wm/de<input id="post-wm" name="wm" placeholder="kde, hyprland, sway..."></label>
+          <label for="post-license">license<input id="post-license" name="license" placeholder="mit, gpl, cc-by, unknown"></label>
+          <label for="post-links">links<input id="post-links" name="links" placeholder="repo/demo/source urls, comma separated"></label>
         </div>
-        <label>summary<textarea name="summary" required rows="4" placeholder="what is it, what does it theme, install notes, caveats"></textarea></label>
-        <label>tags<input name="tags" placeholder="nord, kde, plasma, kvantum, blue"></label>
+        <label for="post-summary">summary<textarea id="post-summary" name="summary" required rows="4" placeholder="what is it, what does it theme, install notes, caveats"></textarea></label>
+        <label for="post-tags">tags<input id="post-tags" name="tags" placeholder="nord, kde, plasma, kvantum, blue"></label>
         <label class="file-drop">attachments<input id="asset-input" type="file" multiple accept="image/*,.css,.scss,.conf,.json,.yaml,.yml,.toml,.txt,.sh,.md,.kvconfig,.colors,.tar,.gz,.zip"></label>
         <div id="draft-assets" class="draft-assets">${draftAssetsHtml()}</div>
         <button class="primary" type="submit">publish</button>
@@ -950,8 +1163,22 @@ function bindEvents() {
   );
   
   document.querySelectorAll('[data-action="toggle-composer"]').forEach(btn => 
-    btn.addEventListener('click', () => { state.composerOpen = !state.composerOpen; render(); })
+    btn.addEventListener('click', () => { 
+      state.composerOpen = !state.composerOpen; 
+      if (state.composerOpen) {
+        setViewMeta('composer');
+      } else {
+        setViewMeta('home', { handle: state.handle });
+      }
+      render(); 
+    })
   );
+  
+  // Theme toggle
+  document.querySelector('[data-action="toggle-theme"]')?.addEventListener('click', () => {
+    toggleTheme();
+    render();
+  });
   
   document.getElementById('handle-input')?.addEventListener('change', e => setHandle(e.target.value));
   document.getElementById('search')?.addEventListener('input', e => { state.query = e.target.value; render(); });
@@ -1088,6 +1315,14 @@ function viewProfile(handle) {
     state.currentProfile = profile;
     state.view = 'profile';
     window.location.hash = `profile/${handle}`;
+    const userPosts = state.posts.filter(p => p.handle === profile.handle);
+    const joined = profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'recently';
+    setViewMeta('profile', { 
+      handle: profile.handle, 
+      bio: profile.bio, 
+      postCount: userPosts.length,
+      joined 
+    });
     render();
   }
 }
@@ -1095,5 +1330,12 @@ function viewProfile(handle) {
 // ── start ──
 
 init();
+
+// Set initial meta tags based on hash
+window.addEventListener('load', () => {
+  const hash = window.location.hash.slice(1) || 'home';
+  const view = hash.split('/')[0];
+  setViewMeta(view, { handle: state.handle });
+});
 
 export { state }; // for debugging

@@ -1,0 +1,63 @@
+name: ricehub bots - scheduled runs
+
+on:
+  schedule:
+    # Run every 6 hours (0, 6, 12, 18 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Bot mode'
+        required: true
+        default: 'runner'
+        type: choice
+        options:
+          - runner      # One-shot post+interact cycle
+          - simulate    # Continuous world simulation (runs for workflow timeout)
+
+permissions:
+  contents: read
+
+jobs:
+  run-bots:
+    name: Run ricehub bots (${{ github.event.inputs.mode || 'runner' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: bots/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./bots
+        run: npm ci
+      
+      - name: Run bots (runner mode)
+        if: github.event.inputs.mode == 'runner' || github.event_name == 'schedule'
+        working-directory: ./bots
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: npm start
+      
+      - name: Run bots (simulate mode)
+        if: github.event.inputs.mode == 'simulate'
+        working-directory: ./bots
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SIM_INTERVAL_MS: '60000'  # 1 minute ticks for simulation
+        run: timeout 12m npm run simulate || true
+      
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-runner-logs
+          path: bots/bot-runner.log
+          retention-days: 7

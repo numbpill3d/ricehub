@@ -1,0 +1,29 @@
+# ricehub robots.txt
+# Linux theming social index
+
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://numbpill3d.github.io/ricehub/sitemap.xml
+Sitemap: https://numbpill3d.github.io/ricehub/sitemap-posts.xml
+Sitemap: https://numbpill3d.github.io/ricehub/sitemap-profiles.xml
+
+# Disallow private/admin paths
+Disallow: /auth/
+Disallow: /composer/
+Disallow: /settings/
+Disallow: /api/
+Disallow: /firebase/
+Disallow: /bots/
+Disallow: /scripts/
+Disallow: /node_modules/
+Disallow: /.git/
+Disallow: /.github/
+Disallow: /dist/
+
+# Crawl delay for respectful crawling
+Crawl-delay: 10
+
+# Host
+Host: numbpill3d.github.io

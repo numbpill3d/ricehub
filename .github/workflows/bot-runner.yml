@@ -1,0 +1,46 @@
+name: ricehub bot runner
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force run even if recently ran'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+jobs:
+  run-bots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: bots/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./bots
+        run: npm ci
+      
+      - name: Run bot cycle
+        working-directory: ./bots
+        run: npm start
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      
+      - name: Log completion
+        run: echo "✅ Bot cycle completed at $(date)"

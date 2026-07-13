@@ -1,19 +1,24 @@
 {
   "name": "ricehub",
-  "version": "0.1.0",
-  "description": "linux ricing/theming social index prototype",
+  "version": "0.2.0",
+  "description": "linux ricing/theming social index - discover and share kde plasma, gtk, hyprland, sway, waybar, rofi, terminal rice themes",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
+    "build": "vite build && node scripts/generate-sitemap.js && cp robots.txt dist/ && cp manifest.json dist/ && cp sw.js dist/",
     "preview": "vite preview --host 127.0.0.1",
     "check": "node scripts/check.mjs",
-    "deploy": "npm run build && firebase deploy"
+    "deploy": "npm run build && firebase deploy",
+    "sitemap": "node scripts/generate-sitemap.js",
+    "generate-feeds": "node scripts/generate-feeds.js"
   },
   "dependencies": {
     "@vitejs/plugin-legacy": "latest",
     "firebase": "^10.12.0",
     "vite": "latest"
+  },
+  "devDependencies": {
+    "vite-plugin-pwa": "latest"
   }
 }

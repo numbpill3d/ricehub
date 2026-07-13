@@ -1,0 +1,18 @@
+{
+  "name": "ricehub-bots",
+  "version": "1.0.0",
+  "description": "ricehub bot runner & world simulation - firebase admin sdk",
+  "private": true,
+  "type": "module",
+  "main": "bot-runner.js",
+  "scripts": {
+    "start": "node bot-runner.js",
+    "dev": "node --watch bot-runner.js",
+    "simulate": "node world-simulator.js",
+    "simulate:dev": "node --watch world-simulator.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "dotenv": "^16.4.0"
+  }
+}
