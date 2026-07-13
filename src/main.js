@@ -675,6 +675,16 @@ function homeViewHtml() {
   const recentUsers = getRecentUsers(5);
   const themeOfDay = getThemeOfDay();
   setViewMeta('home');
+
+  const pulsePosts = [...state.posts]
+    .sort((a, b) => ((b.likesCount || 0) + (b.savesCount || 0) * 2 + (b.commentsCount || 0))
+      - ((a.likesCount || 0) + (a.savesCount || 0) * 2 + (a.commentsCount || 0)))
+    .slice(0, 4);
+  const tagCounts = state.posts.flatMap(p => p.tags || []).reduce((counts, tag) => {
+    counts[tag] = (counts[tag] || 0) + 1;
+    return counts;
+  }, {});
+  const pulseTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
   
   return `
     ${categoryNavHtml()}
@@ -709,6 +719,31 @@ function homeViewHtml() {
             </header>
             <div class="news-list">
               ${state.newsItems.slice(0, 3).map(n => `<article class="news-item"><h4>${esc(n.title)}</h4><p class="news-meta">${esc(n.date)}</p><p>${esc(n.body)}</p></article>`).join('')}
+            </div>
+          </section>
+
+          <!-- Community Pulse -->
+          <section class="community-pulse panel" aria-labelledby="pulse-heading">
+            <header class="panel-header">
+              <span class="eyebrow" id="pulse-heading">⌁ Community Pulse</span>
+              <a href="#feed?sort=hot" data-action="view-feed" data-sort="hot" class="view-all">open hot feed →</a>
+            </header>
+            <div class="pulse-grid">
+              <div class="pulse-posts">
+                ${pulsePosts.map(post => {
+                  const shot = post.attachments?.find(a => a.kind === 'image' && (a.url || a.dataUrl));
+                  return `<a class="pulse-post" href="#post/${post.id}" data-action="view-post" data-post-id="${post.id}">
+                    <span class="pulse-thumb" ${shot ? `style="background-image:url('${esc(shot.url || shot.dataUrl)}')"` : ''}></span>
+                    <span class="pulse-copy"><strong>${esc(post.title)}</strong><small>@${esc(post.author)} · ♥ ${post.likesCount || 0} · ◆ ${post.savesCount || 0}</small></span>
+                  </a>`;
+                }).join('') || '<p class="pulse-empty">the feed is quiet. suspiciously quiet.</p>'}
+              </div>
+              <div class="pulse-tags">
+                <span class="pulse-label">tags moving now</span>
+                <div class="pulse-tag-cloud">
+                  ${pulseTags.map(([tag, count]) => `<button data-action="tag" data-tag="${esc(tag)}">#${esc(tag)} <small>${count}</small></button>`).join('')}
+                </div>
+              </div>
             </div>
           </section>
         </div>
