@@ -263,7 +263,10 @@ const seedPosts = [
     summary: 'starter specimen showing the expected shape: screenshots, config notes, component tags, comments, saves. replace this with real public submissions when backend lands.',
     tags: ['terminal', 'red-black', 'pixel-font', 'prototype'],
     links: ['https://store.kde.org/', 'https://www.gnome-look.org/'],
-    attachments: [],
+    attachments: [
+      { id: crypto.randomUUID(), name: 'sway-terminal-screenshot.png', type: 'image/png', size: 245760, kind: 'image', url: 'https://raw.githubusercontent.com/numbpill3d/ricehub/main/assets/screenshots/sway-terminal.png' },
+      { id: crypto.randomUUID(), name: 'waybar-config.json', type: 'application/json', size: 3072, kind: 'file', url: 'https://raw.githubusercontent.com/numbpill3d/ricehub/main/assets/configs/waybar-config.json' }
+    ],
     createdAt: Date.now() - 86400000,
     updatedAt: Date.now() - 86400000,
     likesCount: 3,
@@ -286,7 +289,11 @@ const seedPosts = [
     summary: 'complete nord-themed plasma desktop. includes color scheme, window decorations (kvantum), sddm theme, and matching wallpaper. tested on plasma 6.1.',
     tags: ['nord', 'kde', 'plasma', 'kvantum', 'blue'],
     links: ['https://store.kde.org/p/1234567/'],
-    attachments: [],
+    attachments: [
+      { id: crypto.randomUUID(), name: 'nordic-kde-desktop.png', type: 'image/png', size: 512000, kind: 'image', url: 'https://raw.githubusercontent.com/numbpill3d/ricehub/main/assets/screenshots/nordic-kde.png' },
+      { id: crypto.randomUUID(), name: 'nordic-kde.kvconfig', type: 'application/octet-stream', size: 12288, kind: 'file', url: 'https://raw.githubusercontent.com/numbpill3d/ricehub/main/assets/configs/nordic-kde.kvconfig' },
+      { id: crypto.randomUUID(), name: 'nordic-sddm-theme.tar.gz', type: 'application/gzip', size: 896000, kind: 'file', url: 'https://raw.githubusercontent.com/numbpill3d/ricehub/main/assets/themes/nordic-sddm.tar.gz' }
+    ],
     createdAt: Date.now() - 172800000,
     updatedAt: Date.now() - 172800000,
     likesCount: 12,
@@ -306,7 +313,10 @@ const seedPosts = [
     summary: 'ported google material you cursor theme to x11/wayland. 48 cursors, all states animated. works on hyprland, sway, kde, gnome.',
     tags: ['material', 'google', 'animated', 'wayland', 'x11'],
     links: ['https://www.rw-designer.com/cursor-set/material-you'],
-    attachments: [],
+    attachments: [
+      { id: crypto.randomUUID(), name: 'material-you-cursors-preview.png', type: 'image/png', size: 180000, kind: 'image', url: 'https://raw.githubusercontent.com/numbpill3d/ricehub/main/assets/screenshots/material-you-cursors.png' },
+      { id: crypto.randomUUID(), name: 'material-you-cursors.tar.gz', type: 'application/gzip', size: 2457600, kind: 'file', url: 'https://raw.githubusercontent.com/numbpill3d/ricehub/main/assets/cursors/material-you-cursors.tar.gz' }
+    ],
     createdAt: Date.now() - 259200000,
     updatedAt: Date.now() - 259200000,
     likesCount: 8,

@@ -20,15 +20,36 @@ service cloud.firestore {
       // Create - authenticated user can create, must be owner
       allow create: if isAuth() &&
         request.resource.data.keys().hasAll(['title', 'component', 'author', 'handle', 'summary', 'createdAt']) &&
-        request.resource.data.handle == request.auth.token.name || request.resource.data.handle == request.auth.uid &&
+        request.resource.data.handle == request.auth.uid &&
+        request.resource.data.likesCount == 0 &&
+        request.resource.data.savesCount == 0 &&
+        request.resource.data.commentsCount == 0 &&
         request.resource.data.createdAt == request.time;
       
-      // Update - only author can update their post
-      allow update: if isAuth() &&
+      // Update - authors can edit content; client transactions may only adjust aggregate counters.
+      allow update: if isAuth() && (
+        (
         resource.data.handle == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'title', 'summary', 'tags', 'links', 'distro', 'wm', 'license', 'updatedAt'
-        ]);
+        ])
+        ) ||
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount', 'savesCount', 'commentsCount']) &&
+          request.resource.data.likesCount is int &&
+          request.resource.data.savesCount is int &&
+          request.resource.data.commentsCount is int &&
+          request.resource.data.likesCount >= 0 &&
+          request.resource.data.savesCount >= 0 &&
+          request.resource.data.commentsCount >= 0 &&
+          request.resource.data.likesCount >= resource.data.likesCount - 1 &&
+          request.resource.data.likesCount <= resource.data.likesCount + 1 &&
+          request.resource.data.savesCount >= resource.data.savesCount - 1 &&
+          request.resource.data.savesCount <= resource.data.savesCount + 1 &&
+          request.resource.data.commentsCount >= resource.data.commentsCount - 1 &&
+          request.resource.data.commentsCount <= resource.data.commentsCount + 1
+        )
+      );
       
       // Delete - only author can delete
       allow delete: if isAuth() && resource.data.handle == request.auth.uid;
@@ -38,6 +59,7 @@ service cloud.firestore {
     match /post_likes/{likeId} {
       allow read: if true;
       allow create: if isAuth() &&
+        likeId == request.auth.uid + '_' + request.resource.data.postId &&
         request.resource.data.keys().hasAll(['postId', 'handle']) &&
         request.resource.data.handle == request.auth.uid;
       allow delete: if isAuth() && resource.data.handle == request.auth.uid;
@@ -47,6 +69,7 @@ service cloud.firestore {
     match /post_saves/{saveId} {
       allow read: if isAuth() && resource.data.handle == request.auth.uid;
       allow create: if isAuth() &&
+        saveId == request.auth.uid + '_' + request.resource.data.postId &&
         request.resource.data.keys().hasAll(['postId', 'handle']) &&
         request.resource.data.handle == request.auth.uid;
       allow delete: if isAuth() && resource.data.handle == request.auth.uid;
